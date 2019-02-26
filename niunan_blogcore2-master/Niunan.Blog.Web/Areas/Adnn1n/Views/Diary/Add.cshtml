@@ -1,0 +1,88 @@
+﻿@model Niunan.Blog.Model.Diary
+@{
+    ViewBag.Title = Model.id == 0 ? "新增日记" : "编辑日记";
+}
+
+<form class="layui-form" action="" name="form1">
+    <blockquote class="layui-elem-quote">@ViewBag.Title</blockquote>
+    <div class='layui-form'>
+ 
+        <div class='layui-form-item'>
+            <label class='layui-form-label'>标题</label>
+            <div class='layui-input-block'>
+                @Html.TextBoxFor(a => a.title, new { @class = "layui-input", lay_verify = "required" })
+            </div>
+            <div class='layui-form-mid layui-word-aux'><!--辅助文字--></div>
+        </div>
+        <div class='layui-form-item'>
+            <label class='layui-form-label'>内容</label>
+            <div class="layui-input-block"> 
+                @Html.TextAreaFor(a => a.body, new { @class = "layui-input", style="height:480px;" })
+            </div>
+        </div>
+
+
+
+        <div class="layui-form-item">
+            <label class='layui-form-label'>&nbsp;</label>
+            <div class="layui-input-inline">
+                <button class="layui-btn" lay-submit="" lay-filter="demo1">@ViewBag.Title</button>
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(a => a.id)
+                @Html.HiddenFor(a => a.createtime)
+            </div>
+        </div>
+    </div>
+
+</form>
+<link rel="stylesheet" href="/kindeditor/themes/default/default.css" />
+<link rel="stylesheet" href="/kindeditor/plugins/code/prettify.css" />
+<script src="~/kindeditor/kindeditor-all-min.js"></script>
+<script charset="utf-8" src="/kindeditor/lang/zh-CN.js"></script>
+<script charset="utf-8" src="/kindeditor/plugins/code/prettify.js"></script>
+<script>
+    var editor1;
+    KindEditor.ready(function (K) {
+          editor1 = K.create('#body', {
+            cssPath: '/kindeditor/plugins/code/prettify.css',
+            uploadJson: '/Adnn1n/Home/KE_Upload',
+            afterCreate: function () {
+                var self = this;
+                K.ctrl(document, 13, function () {
+                    self.sync();
+                    K('form[name=form1]')[0].submit();
+                });
+                K.ctrl(self.edit.doc, 13, function () {
+                    self.sync();
+                    K('form[name=form1]')[0].submit();
+                });
+            }
+        });
+        prettyPrint();
+    });
+
+    /*加载layui编辑器*/
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form();
+        var $ = layui.jquery;
+
+
+
+        //监听提交
+        form.on('submit(demo1)', function (data) {
+            var url = "/adnn1n/Diary/add";
+            var postdata = data.field;
+            postdata.body = editor1.html();
+            $.post(url, postdata, function (data) {
+                if (data.code == 0) {
+                    layer.alert(data.msg, function () { location.href = "/adnn1n/Diary/"; })
+                } else {
+                    layer.alert(data.msg);
+                }
+            }, 'json')
+            return false;
+        });
+
+    });
+</script>
+

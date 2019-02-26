@@ -1,0 +1,56 @@
+﻿@{
+ 
+}
+<style>
+    .layui-tab{
+        float:left;
+       width:250px;
+       border :1px solid #e6e6e6;
+       margin:1rem;
+    }
+    .layui-tab-content{
+        font-size:25px;
+        font-weight:bold;
+    }
+</style>
+<div class="layui-tab layui-tab-brief">
+    <ul class="layui-tab-title">
+        <li class="layui-this">案例</li>
+    </ul>
+    <div class="layui-tab-content">
+        @ViewBag.casecount
+    </div>
+</div>
+<div class="layui-tab layui-tab-brief">
+    <ul class="layui-tab-title">
+        <li class="layui-this">视频</li>
+    </ul>
+    <div class="layui-tab-content">
+        @ViewBag.videocount
+    </div>
+</div>
+<div class="layui-tab layui-tab-brief">
+    <ul class="layui-tab-title">
+        <li class="layui-this">博客</li>
+    </ul>
+    <div class="layui-tab-content">
+        @ViewBag.blogcount
+    </div>
+</div>
+<div class="layui-tab layui-tab-brief">
+    <ul class="layui-tab-title">
+        <li class="layui-this">日记</li>
+    </ul>
+    <div class="layui-tab-content">
+       @ViewBag.diarycount
+    </div>
+</div>
+
+<div class="layui-tab layui-tab-brief">
+    <ul class="layui-tab-title">
+        <li class="layui-this">书签</li>
+    </ul>
+    <div class="layui-tab-content">
+        @ViewBag.shuqiancount
+    </div>
+</div>

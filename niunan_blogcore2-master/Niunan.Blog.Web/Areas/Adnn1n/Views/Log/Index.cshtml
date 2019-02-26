@@ -1,0 +1,198 @@
+﻿ 
+<blockquote class="layui-elem-quote">系统日志</blockquote>
+<div style="padding:10px;">
+    <div class="layui-form"> 
+        <div class="layui-input-inline">
+            <input type="text" id="search_key" class="layui-input" placeholder="IP或者IP所属地区" />
+        </div>
+        <div class="layui-input-inline">
+            记录时间：
+        </div>
+        <div class="layui-input-inline">
+            <input type="text" id="search_start" class="layui-input" placeholder="开始时间" />
+        </div>
+        <div class="layui-input-inline">
+            ~
+        </div>
+        <div class="layui-input-inline">
+            <input type="text" id="search_end" class="layui-input" placeholder="结束时间" /> 
+        </div> 
+        <div class="layui-input-inline">
+            <button class="layui-btn layui-btn-normal" type="button" onclick="search()"><i class="layui-icon">&#xe615;</i> 查询</button>
+        </div>
+
+    </div>
+    <table class="layui-table">
+        <thead>
+            <tr>
+                <th>记录时间</th>
+                <th>类型</th>
+                <th>用户名</th>
+                <th>备注</th>
+                <th>IP</th>
+                <th>IP所属地区</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="tbody"> 
+
+        </tbody>
+    </table>
+    <div>
+        <div style="float: left; line-height: 55px;margin: 0 15px; font-size: 16px;">
+            当前共<span id="totalcount"></span>条日志，第<span id="pageindex"></span>页/共<span id="pagecount"></span>页
+        </div>
+        <div id="pages">
+
+        </div>
+    </div>
+</div>
+
+<script>
+    /*日期选择控件设置*/
+    layui.use('laydate', function () {
+        var laydate = layui.laydate;
+        document.getElementById('search_start').onclick = function () {
+            laydate({ elem: this});
+        }
+        document.getElementById('search_end').onclick = function () {
+            laydate({ elem: this });
+        }
+    });
+   
+
+
+    var pagesize = 10; //页大小
+    /*分页*/
+    layui.use(['laypage', 'layer'], function () {
+        var laypage = layui.laypage, layer = layui.layer, $ = layui.jquery;
+        var url = "/Adnn1n/Log/GetTotalCount?t=" + new Date().valueOf();
+        $.post(url, function (count) {
+
+            var pagecount = (count % pagesize == 0 ? count / pagesize : Math.ceil(count / pagesize)); //总页数
+          //  console.log("总记录数：" + count + "，总页数：" + pagecount);
+            $('#totalcount').text(count);
+            $('#pagecount').text(pagecount);
+
+            laypage({
+                cont: 'pages',
+                pages: pagecount, //得到总页数
+                jump: function (obj) {
+                    var pageindex = obj.curr;
+                    //layer.alert("点击了第" + pageindex + "页。");
+                    //读取后台数据数据返回JSON后拼接HTML
+                    load_blog_data(pageindex);
+                }
+            });
+
+        });
+
+    });
+    /*加载第X页数据*/
+    function load_blog_data(pageindex) {
+      //  console.log("加载第" + pageindex + "页");
+
+
+        layui.use('layer', function () {
+            var $ = layui.jquery, layer = layui.layer;
+
+            $('#pageindex').text(pageindex);
+
+ 
+            var postdata = getcond();
+
+            var url = "/Adnn1n/Log/List?pageindex=" + pageindex + "&pagesize=" + pagesize;
+            $.post(url,postdata, function (json) {
+
+                var html = '';
+                $.each(json, function (i, blog) {
+                   // console.log("第" + i + "个元素：");
+                  //  console.log(blog);
+                    html += '<tr>';
+                    html += '    <td>' + blog.createDate + '</td>';
+                    html += '    <td>' + blog.type + '</td>';
+                    html += '    <td>' + blog.userName + '</td>';
+                    html += '    <td>' + blog.remark + '</td>';
+                    html += '    <td>' + blog.ip + '</td>';
+                    html += '    <td>' + blog.ipAddress + '</td>';
+                    html += '    <td>'; 
+                    html += '        <a href="javascript:void()0;" onclick="del(' + blog.id + ')"><i class="layui-icon">&#x1006;</i> 删除</a>';
+                    html += '    </td>';
+                    html += '</tr>';
+
+                })
+
+                $('#tbody').html(html);
+
+            }, 'json');
+        })
+
+
+    }
+
+    /*拼接条件返回postdata*/
+    function getcond() {
+
+        var key = document.getElementById("search_key").value;
+        var start = document.getElementById('search_start').value;
+        var end = document.getElementById('search_end').value; 
+        var postdata = { key: key, start: start, end: end };
+        return postdata;
+    }
+
+    /*查询*/
+    function search() {
+
+        layui.use(['laypage', 'layer'], function () {
+            var laypage = layui.laypage, layer = layui.layer, $ = layui.jquery;
+
+            var postdata = getcond();
+
+            var url = "/Adnn1n/Log/GetTotalCount?t=" + new Date().valueOf();
+            $.post(url,postdata, function (count) {
+
+                var pagecount = (count % pagesize == 0 ? count / pagesize : Math.ceil(count / pagesize)); //总页数
+                console.log("总记录数：" + count + "，总页数：" + pagecount);
+                $('#totalcount').text(count);
+                $('#pagecount').text(pagecount);
+
+                laypage({
+                    cont: 'pages',
+                    pages: pagecount, //得到总页数
+                    jump: function (obj) {
+                        var pageindex = obj.curr;
+                        //layer.alert("点击了第" + pageindex + "页。");
+                        //读取后台数据数据返回JSON后拼接HTML
+                        load_blog_data(pageindex);
+                    }
+                });
+
+            });
+
+        });
+
+    }
+
+
+    /*删除*/
+    function del(id) {
+        layui.use('layer', function () {
+            var layer = layui.layer;
+            var $ = layui.jquery;
+
+            layer.confirm('是否确认删除？', function () {
+
+                var url = "/Adnn1n/Log/Del/" + id;
+                $.post(url, function (data) {
+                    layer.alert(data, function () { location.reload(); });
+                })
+
+            })
+
+
+
+        })
+
+
+    }
+</script>

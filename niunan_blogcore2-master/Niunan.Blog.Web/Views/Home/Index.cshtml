@@ -1,0 +1,136 @@
+﻿@{
+    ViewBag.Title = "首页"; 
+    Niunan.Blog.DAL.BlogDAL blogdal = ViewBag.blogdal;
+}
+
+ 
+
+            <div class="body-wrap">
+
+                <div id="blog_list">
+                    
+                </div>
+
+
+                <div>
+                    <div style="float: left; line-height: 55px;margin: 0 15px; font-size: 16px;">
+                        当前共<span id="totalcount"></span>篇文章，每页12篇，第<span id="pageindex"></span>页/共<span id="pagecount"></span>页
+                    </div>
+                    <div id="pages">
+
+                    </div>
+                </div>
+
+            </div>
+
+ 
+ 
+    <script>
+        var pagesize = 12; //页大小
+        /*分页*/
+        layui.use(['laypage', 'layer'], function () {
+            var laypage = layui.laypage, layer = layui.layer, $ = layui.jquery;
+
+            var postdata = getcond();
+            var url = "/Blog/GetTotalCount?t=" + new Date().valueOf();
+            $.post(url, postdata, function (count) {
+
+                var pagecount = (count % pagesize == 0 ? count / pagesize : Math.ceil(count / pagesize)); //总页数
+                //  console.log("总记录数：" + count + "，总页数：" + pagecount);
+                $('#totalcount').text(count);
+                $('#pagecount').text(pagecount);
+
+                laypage({
+                    cont: 'pages',
+                    pages: pagecount, //得到总页数
+                    jump: function (obj) {
+                        var pageindex = obj.curr;
+                        //layer.alert("点击了第" + pageindex + "页。");
+                        //读取后台数据数据返回JSON后拼接HTML
+                        load_blog_data(pageindex);
+                    }
+                });
+
+            });
+
+        });
+        /*加载第X页数据*/
+        function load_blog_data(pageindex) {
+            //  console.log("加载第" + pageindex + "页");
+
+
+            layui.use('layer', function () {
+                var $ = layui.jquery, layer = layui.layer;
+
+                $('#pageindex').text(pageindex);
+
+
+                var postdata = getcond();
+
+                var url = "/Blog/List?pageindex=" + pageindex + "&pagesize=" + pagesize;
+                $.post(url, postdata, function (json) {
+
+                    var html = '';
+                    $.each(json, function (i, blog) {
+                        //console.log("第" + i + "个元素：");
+                        // console.log(blog);
+                        var class_color ="color"+( i % 5 + 1); //颜色样式color1-5
+                        html += '<article class="article article-type-post" itemscope itemprop="blogPost">';
+                        html += '    <div class="article-meta">';
+                        html += '        <a href="/blog/show/' + blog.id + '" class="article-date">';
+                        html += '            <time datetime="" itemprop="datePublished">' + blog.createDate + '</time>';
+                        html += '        </a>';
+                        html += '    </div>';
+                        html += '    <div class="article-inner">';
+                        html += '        <input type="hidden" class="isFancy" />';
+                        html += '        <header class="article-header">';
+                        html += '            <h1 itemprop="name">';
+                        html += '                <a class="article-title" href="/blog/show/' + blog.id + '">' + blog.title + '</a>';
+                        html += '            </h1>';
+                        html += '        </header>';
+                        html += '        <div class="article-entry" itemprop="articleBody">';
+                        html += blog.desc;
+                        html += '        </div>';
+                        html += '        <div class="article-info article-info-index">';
+                        html += '            <div class="article-tag tagcloud">';
+                        html += '                <ul class="article-tag-list">';
+                        html += '                    <li class="article-tag-list-item"><a class="' + class_color + '">' + blog.caName + '</a></li>';
+                        html += '                </ul>';
+                        html += '            </div>';
+                        html += '            <div class="clearfix"></div>';
+                        html += '        </div>';
+                        html += '    </div>';
+                        html += '</article>';
+                    })
+
+                    $('#blog_list').html(html);
+
+                }, 'json');
+            })
+
+
+        }
+
+
+        /*拼接条件返回postdata*/
+        function getcond() {
+
+            var key = $("#hf_key").val() ;
+            var month = $("#hf_month").val();
+            var cabh = $("#hf_cabh").val();
+            var postdata = { key: key, month: month, cabh: cabh };
+            console.log(postdata);
+
+            return postdata;
+        }
+
+        /*取URL参数的方法(传入的参数是中文的时候有问题)*/
+        function getQueryString(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null) return unescape(r[2]); return null;
+        }
+
+    
+    </script>
+ 

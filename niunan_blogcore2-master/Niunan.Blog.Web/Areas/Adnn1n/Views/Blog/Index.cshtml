@@ -1,0 +1,203 @@
+﻿@*@model List<Niunan.Blog.Model.Blog>*@
+
+<blockquote class="layui-elem-quote">文章管理</blockquote>
+<div style="padding:10px;">
+    <div class="layui-form">
+        <a class="layui-btn" href="/Adnn1n/Blog/Add">
+            <i class="layui-icon">&#xe608;</i> 添加
+        </a>
+        <div class="layui-input-inline">
+            <input type="text" id="search_key" class="layui-input" placeholder="标题关键字" />
+        </div>
+        <div class="layui-input-inline">
+            发布时间：
+        </div>
+        <div class="layui-input-inline">
+            <input type="text" id="search_start" class="layui-input" placeholder="开始时间" />
+        </div>
+        <div class="layui-input-inline">
+            ~
+        </div>
+        <div class="layui-input-inline">
+            <input type="text" id="search_end" class="layui-input" placeholder="结束时间" /> 
+        </div>
+        <div class="layui-input-inline">
+            <select id="search_cabh">
+                <option value="">--所有分类--</option>
+                @foreach (Niunan.Blog.Model.Category ca in ViewBag.calist)
+                { 
+                        <option value="@ca.Bh">@ca.CaName</option> 
+                }
+            </select>
+        </div>
+        <div class="layui-input-inline">
+            <button class="layui-btn layui-btn-normal" type="button" onclick="search()"><i class="layui-icon">&#xe615;</i> 查询</button>
+        </div>
+
+    </div>
+    <table class="layui-table">
+        <thead>
+            <tr>
+                <th>发布时间</th>
+                <th>博客标题</th>
+                <th>所属分类</th>
+                <th>访问量</th>
+                <th>排序号</th>
+                <th>更新时间</th>
+                <th>管理</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            @*@foreach (var blog in Model)
+                {
+                    <tr>
+                        <td>@blog.CreateDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@blog.Title</td>
+                        <td>@blog.CaName</td>
+                        <td>@blog.VisitNum</td>
+                        <td>@blog.Sort</td>
+                        <td>
+                            <a href="/Adnn1n/Blog/Add/@blog.Id"><i class="layui-icon">&#xe642;</i> 编辑</a>
+                            <a href="javascript:void()0;" onclick="del(@blog.Id)"><i class="layui-icon">&#x1006;</i> 删除</a>
+                        </td>
+                    </tr>
+                }*@
+
+        </tbody>
+    </table>
+    <div>
+        <div style="float: left; line-height: 55px;margin: 0 15px; font-size: 16px;">
+            当前共<span id="totalcount"></span>篇文章，第<span id="pageindex"></span>页/共<span id="pagecount"></span>页
+        </div>
+        <div id="pages">
+
+        </div>
+    </div>
+</div>
+
+<script>
+    /*日期选择控件设置*/
+    layui.use('laydate', function () {
+        var laydate = layui.laydate;
+        document.getElementById('search_start').onclick = function () {
+            laydate({ elem: this});
+        }
+        document.getElementById('search_end').onclick = function () {
+            laydate({ elem: this });
+        }
+    });
+   
+
+
+    var pagesize = 10; //页大小
+    search();
+    /*加载第X页数据*/
+    function load_blog_data(pageindex) {
+      //  console.log("加载第" + pageindex + "页");
+
+
+        layui.use('layer', function () {
+            var $ = layui.jquery, layer = layui.layer;
+
+            $('#pageindex').text(pageindex);
+
+ 
+            var postdata = getcond();
+
+            var url = "/Adnn1n/Blog/List?pageindex=" + pageindex + "&pagesize=" + pagesize;
+            $.post(url,postdata, function (json) {
+
+                var html = '';
+                $.each(json, function (i, blog) {
+                   // console.log("第" + i + "个元素：");
+                  //  console.log(blog);
+                    html += '<tr>';
+                    html += '    <td>' + blog.createDate + '</td>';
+                    html += '    <td><a target="_blank" href="/blog/show/'+blog.id+'">' + blog.title + '</a></td>';
+                    html += '    <td>' + blog.caName + '</td>';
+                    html += '    <td>' + blog.visitNum + '</td>';
+                    html += '    <td>' + blog.sort + '</td>';
+                    html += '    <td>' + blog.updatetime + '</td>';
+                    html += '    <td>';
+                    html += '        <a href="/Adnn1n/Blog/Add/' + blog.id + '"><i class="layui-icon">&#xe642;</i> 编辑</a>';
+                    html += '        <a href="javascript:void()0;" onclick="del(' + blog.id + ')"><i class="layui-icon">&#x1006;</i> 删除</a>';
+                    html += '    </td>';
+                    html += '</tr>';
+
+                })
+
+                $('#tbody').html(html);
+
+            }, 'json');
+        })
+
+
+    }
+
+    /*拼接条件返回postdata*/
+    function getcond() {
+
+        var key = document.getElementById("search_key").value;
+        var start = document.getElementById('search_start').value;
+        var end = document.getElementById('search_end').value;
+        var cabh = document.getElementById('search_cabh').value;
+        var postdata = { key: key, start: start, end: end, cabh: cabh };
+        return postdata;
+    }
+
+    /*查询*/
+    function search() {
+
+        layui.use(['laypage', 'layer'], function () {
+            var laypage = layui.laypage, layer = layui.layer, $ = layui.jquery;
+
+            var postdata = getcond();
+
+            var url = "/Adnn1n/Blog/GetTotalCount?t=" + new Date().valueOf();
+            $.post(url,postdata, function (count) {
+
+                var pagecount = (count % pagesize == 0 ? count / pagesize : Math.ceil(count / pagesize)); //总页数
+                console.log("总记录数：" + count + "，总页数：" + pagecount);
+                $('#totalcount').text(count);
+                $('#pagecount').text(pagecount);
+
+                laypage({
+                    cont: 'pages',
+                    pages: pagecount, //得到总页数
+                    jump: function (obj) {
+                        var pageindex = obj.curr;
+                        //layer.alert("点击了第" + pageindex + "页。");
+                        //读取后台数据数据返回JSON后拼接HTML
+                        load_blog_data(pageindex);
+                    }
+                });
+
+            });
+
+        });
+
+    }
+
+
+    /*删除*/
+    function del(id) {
+        layui.use('layer', function () {
+            var layer = layui.layer;
+            var $ = layui.jquery;
+
+            layer.confirm('是否确认删除？', function () {
+
+                var url = "/Adnn1n/Blog/Del/" + id;
+                $.post(url, function (data) {
+                    layer.alert(data, function () { location.reload(); });
+                })
+
+            })
+
+
+
+        })
+
+
+    }
+</script>

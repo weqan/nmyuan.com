@@ -1,0 +1,209 @@
+﻿@{
+    ViewBag.Title = "日记管理";
+}
+<blockquote class="layui-elem-quote">@ViewBag.Title</blockquote>
+<div style="padding:10px;">
+    <div class="layui-form">
+        <a class="layui-btn" href="/Adnn1n/Diary/Add">
+            <i class="layui-icon">&#xe608;</i> 添加
+        </a>
+        <div class="layui-input-inline">
+            <input type="text" id="search_key" class="layui-input" placeholder="标题关键字" />
+        </div>
+        <div class="layui-input-inline">
+            发布时间：
+        </div>
+        <div class="layui-input-inline">
+            <input type="text" id="search_start" class="layui-input" placeholder="开始时间" />
+        </div>
+        <div class="layui-input-inline">
+            ~
+        </div>
+        <div class="layui-input-inline">
+            <input type="text" id="search_end" class="layui-input" placeholder="结束时间" />
+        </div>
+        <div class="layui-input-inline">
+            <select id="search_cabh">
+                <option value="">--所有分类--</option>
+            </select>
+        </div>
+        <div class="layui-input-inline">
+            <button class="layui-btn layui-btn-normal" type="button" onclick="search()"><i class="layui-icon">&#xe615;</i> 查询</button>
+        </div>
+
+    </div>
+    <table class="layui-table">
+        <thead>
+            <tr>
+                <th>日记表</th>
+                <th>创建时间</th>
+                <th>标题</th>
+
+                <th>管理</th>
+            </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
+    <div>
+        <div style="float: left; line-height: 55px;margin: 0 15px; font-size: 16px;">
+            当前共<span id="totalcount"></span>条记录，每页10条，第<span id="pageindex"></span>页/共<span id="pagecount"></span>页
+        </div>
+        <div id="pages">
+
+        </div>
+    </div>
+</div>
+
+<script>
+    /*日期选择控件设置*/
+    layui.use('laydate', function () {
+        var laydate = layui.laydate;
+        document.getElementById('search_start').onclick = function () {
+            laydate({ elem: this});
+        }
+        document.getElementById('search_end').onclick = function () {
+            laydate({ elem: this });
+        }
+    });
+
+
+
+    var pagesize = 10; //页大小
+    /*分页*/
+    layui.use(['laypage', 'layer'], function () {
+        var laypage = layui.laypage, layer = layui.layer, $ = layui.jquery;
+        var url = "/Adnn1n/Diary/GetTotalCount?t=" + new Date().valueOf();
+var postdata=getcond();
+        $.post(url,postdata, function (count) {
+
+            var pagecount = (count % pagesize == 0 ? count / pagesize : Math.ceil(count / pagesize)); //总页数
+          //  console.log("总记录数：" + count + "，总页数：" + pagecount);
+            $('#totalcount').text(count);
+            $('#pagecount').text(pagecount);
+
+            laypage({
+                cont: 'pages',
+                pages: pagecount, //得到总页数
+                jump: function (obj) {
+                    var pageindex = obj.curr;
+                    //layer.alert("点击了第" + pageindex + "页。");
+                    //读取后台数据数据返回JSON后拼接HTML
+                    load_blog_data(pageindex);
+                }
+            });
+
+        });
+
+    });
+    /*加载第X页数据*/
+    function load_blog_data(pageindex) {
+      //  console.log("加载第" + pageindex + "页");
+
+
+        layui.use('layer', function () {
+            var $ = layui.jquery, layer = layui.layer;
+
+            $('#pageindex').text(pageindex);
+
+
+            var postdata = getcond();
+
+            var url = "/Adnn1n/Diary/List?pageindex=" + pageindex + "&pagesize=" + pagesize;
+            $.post(url,postdata, function (json) {
+
+                var html = '';
+                $.each(json, function (i, item) {
+                   // console.log("第" + i + "个元素：");
+                  //  console.log(blog);
+                    html += '<tr>';
+					html += '    <td>' + item.id + '</td>';
+html += '    <td>' + item.createtime + '</td>';
+html += '    <td>' + item.title + '</td>'; 
+
+                    html += '    <td>';
+                    html += '        <a href="/Adnn1n/Diary/Add/' + item.id + '"><i class="layui-icon">&#xe642;</i> 编辑</a>';
+                    html += '        <a href="javascript:void(0);" onclick="del(' + item.id + ')"><i class="layui-icon">&#x1006;</i> 删除</a>';
+                    html += '    </td>';
+                    html += '</tr>';
+
+                })
+
+                $('#tbody').html(html);
+
+            }, 'json');
+        })
+
+
+    }
+
+    /*拼接条件返回postdata*/
+    function getcond() {
+
+        var key = document.getElementById("search_key").value;
+        var start = document.getElementById('search_start').value;
+        var end = document.getElementById('search_end').value;
+        var cabh = document.getElementById('search_cabh').value;
+        var postdata = { key: key, start: start, end: end, cabh: cabh };
+        return postdata;
+    }
+
+    /*查询*/
+    function search() {
+
+        layui.use(['laypage', 'layer'], function () {
+            var laypage = layui.laypage, layer = layui.layer, $ = layui.jquery;
+
+            var postdata = getcond();
+
+            var url = "/Adnn1n/Diary/GetTotalCount?t=" + new Date().valueOf();
+            $.post(url,postdata, function (count) {
+
+                var pagecount = (count % pagesize == 0 ? count / pagesize : Math.ceil(count / pagesize)); //总页数
+               // console.log("总记录数：" + count + "，总页数：" + pagecount);
+                $('#totalcount').text(count);
+                $('#pagecount').text(pagecount);
+
+                laypage({
+                    cont: 'pages',
+                    pages: pagecount, //得到总页数
+                    jump: function (obj) {
+                        var pageindex = obj.curr;
+                        //layer.alert("点击了第" + pageindex + "页。");
+                        //读取后台数据数据返回JSON后拼接HTML
+                        load_blog_data(pageindex);
+                    }
+                });
+
+            });
+
+        });
+
+    }
+
+
+    /*删除*/
+    function del(id) {
+        layui.use('layer', function () {
+            var layer = layui.layer;
+            var $ = layui.jquery;
+
+            layer.confirm('是否确认删除？', function () {
+
+                var url = "/Adnn1n/Diary/Delete?ids=" + id;
+                $.post(url, function (data) {
+                    if (data.code == 0) {
+                        layer.alert(data.msg, function () { location.reload(); });
+                    } else {
+                        layer.alert(data.msg);
+                    }
+                })
+
+            })
+
+
+
+        })
+
+
+    }
+</script>
